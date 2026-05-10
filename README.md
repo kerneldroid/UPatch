@@ -1,14 +1,11 @@
 <div align="center">
-<a href="https://github.com/bmax121/UPatch/releases/latest"><img src="https://images.weserv.nl/?url=https://raw.githubusercontent.com/bmax121/UPatch/main/app/src/main/ic_launcher-playstore.png&mask=circle" style="width: 128px;" alt="UPatch logo"></a>
+<a href="https://github.com/kerneldroid/UPatch/releases/latest"><img src="https://raw.githubusercontent.com/kerneldroid/UPatch/main/app/src/main/ic_launcher-playstore.png" style="width: 128px;" alt="UPatch logo"></a>
 
-<h1 align="center">UPatch</h1>
-<p align="center">Android kernel and system patch manager built around KernelPatch.</p>
+<h1 align="center">UPatch (EXPERIMENTAL FORK)</h1>
+<p align="center"><strong>EXPERIMENTAL</strong> Android kernel and system patch manager built around KernelPatch.</p>
 
-[![Latest Release](https://img.shields.io/github/v/release/bmax121/UPatch?label=Release&logo=github)](https://github.com/bmax121/UPatch/releases/latest)
-[![Nightly Release](https://img.shields.io/badge/Nightly%20release-gray?logo=hackthebox&logoColor=fff)](https://nightly.link/bmax121/UPatch/workflows/build/main/UPatch)
-[![Weblate](https://img.shields.io/badge/Localization-Weblate-teal?logo=weblate)](https://hosted.weblate.org/engage/UPatch)
-[![Channel](https://img.shields.io/badge/Follow-Telegram-blue.svg?logo=telegram)](https://t.me/UPatchChannel)
-[![GitHub License](https://img.shields.io/github/license/bmax121/UPatch?logo=gnu)](/LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/kerneldroid/UPatch?label=Release&logo=github)](https://github.com/kerneldroid/UPatch/releases/latest)
+[![GitHub License](https://img.shields.io/github/license/kerneldroid/UPatch?logo=gnu)](/LICENSE)
 
 </div>
 
@@ -73,9 +70,7 @@ The first Gradle run downloads dependencies, so a network connection is required
 
 ## Getting help
 
-- End-user documentation: [apatch.dev](https://apatch.dev)
 - Repository docs: [docs/](docs/)
-- Questions / troubleshooting: [GitHub Discussions](https://github.com/bmax121/UPatch/discussions) or the project Telegram groups
 - Bug reports: use the issue templates and attach the manager-generated bug report archive whenever possible
 
 For kernel panics, patching regressions, or failures that clearly originate in the patch core rather than the manager UI, include the same evidence when reporting upstream to [KernelPatch](https://github.com/bmax121/KernelPatch).
@@ -83,16 +78,6 @@ For kernel panics, patching regressions, or failures that clearly originate in t
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, submission expectations, and review guidelines.
-
-## Translation
-
-Translations are managed through [Weblate](https://hosted.weblate.org/engage/UPatch). Direct translation PRs are usually avoided so they do not conflict with the translation sync flow.
-
-<div align="center">
-
-[![Translation Status](https://hosted.weblate.org/widget/UPatch/open-graph.png)](https://hosted.weblate.org/engage/UPatch/)
-
-</div>
 
 ## Credits
 
