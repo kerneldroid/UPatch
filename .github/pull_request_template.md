@@ -1,16 +1,19 @@
-## Summary
+## Pull Request Checklist
 
-- What changed?
-- Why was it needed?
+**STOP AND READ:** This repository is STRICTLY English-only. Your PR must adhere to the `CONTRIBUTING.md` guidelines or it will be closed.
 
-## Validation
+### Prerequisites
+- [ ] I have read the [CONTRIBUTING.md](../CONTRIBUTING.md).
+- [ ] My code compiles without new warnings (`./gradlew assembleRelease`).
+- [ ] I have kept my PR focused on a single issue or feature.
+- [ ] My commit messages are squashed into logical units and describe the changes clearly.
 
-- [ ] Built successfully
-- [ ] Updated docs or comments when needed
-- [ ] Checked user-visible strings / behavior
-- [ ] Validated shell-script changes when applicable
+### Description
+Provide a clear and concise description of the changes in this PR. Link to any related issues.
 
-## Notes for reviewers
+### UI Changes
+If your PR modifies the UI, you MUST include before and after screenshots (or a video) below.
 
-- Any compatibility concerns
-- Any follow-up work that should stay out of this PR
+### Architecture
+- [ ] I have kept UI logic separate from core patch logic.
+- [ ] I have followed standard Kotlin/Rust idioms for the respective components.
