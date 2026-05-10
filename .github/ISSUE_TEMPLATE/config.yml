@@ -1,11 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Ask a question | 提问
-    url: https://github.com/bmax121/UPatch/discussions/new?category=q-a
-    about: Ask usage or troubleshooting questions here | 使用问题或排障问题请在这里提问
-  - name: Documentation | 文档
-    url: https://apatch.dev
-    about: Read usage documentation and project notes | 查看使用文档和项目说明
-  - name: Official Telegram channel | 官方 Telegram 频道
-    url: https://t.me/UPatchChannel
-    about: Subscribe to receive releases and announcements | 订阅版本发布和公告
+  - name: GitHub Discussions
+    url: https://github.com/kerneldroid/UPatch/discussions
+    about: Ask questions and discuss with other users. English ONLY.
