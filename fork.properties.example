@@ -1,0 +1,26 @@
+# Copy the values you need into your local gradle.properties or ~/.gradle/gradle.properties.
+# Branding / publishing
+fork.appName=UPatch
+fork.applicationId=dev.upatch.manager
+# fork.artifactName=UPatch
+# fork.sourceRepoUrl=https://github.com/your-org/UPatch
+# fork.issuesUrl=https://github.com/your-org/UPatch/issues/new/choose
+# fork.docsUrl=https://github.com/your-org/UPatch#readme
+# fork.channelUrl=https://t.me/your_channel
+# fork.discussionUrl=https://t.me/your_group
+# fork.weblateUrl=https://hosted.weblate.org/engage/your-project
+# fork.updateApiUrl=https://api.github.com/repos/your-org/UPatch/releases/latest
+
+# Release hardening
+# Set a base64-encoded SHA-256 of the release signing certificate before public distribution.
+# fork.expectedSignatureSha256=
+# fork.enforceSignatureVerification=true
+
+# Android platform targeting
+# Stable SDK example
+# android.compileSdk=36
+# android.targetSdk=36
+
+# Preview SDK example (set a preview codename only when you actually installed that preview SDK)
+# android.compileSdkPreview=
+# android.targetSdkPreview=
