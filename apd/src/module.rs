@@ -155,8 +155,8 @@ pub fn get_common_script_envs() -> Vec<(&'static str, String)> {
         // Stealth: use KSU-compatible env names to avoid APATCH detection
         // while maintaining module compatibility
         ("KSU", "true".to_string()),
-        ("KSU_VER", defs::VERSION_NAME.to_string()),
-        ("KSU_VER_CODE", defs::VERSION_CODE.to_string()),
+        ("KSU_VER", "3.2.4".to_string()),
+        ("KSU_VER_CODE", "12000".to_string()),
         ("APATCH", "true".to_string()),
         ("APATCH_VER_CODE", defs::VERSION_CODE.to_string()),
         (
