@@ -143,7 +143,11 @@ pub fn load_config(module_id: &str, config_type: ConfigType) -> Result<HashMap<S
     let count = u32::from_le_bytes(count_buf);
 
     if count as usize > MAX_CONFIG_COUNT {
-        bail!("Too many config entries in file: {} (max: {})", count, MAX_CONFIG_COUNT);
+        bail!(
+            "Too many config entries in file: {} (max: {})",
+            count,
+            MAX_CONFIG_COUNT
+        );
     }
 
     // Read entries
