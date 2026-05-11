@@ -116,7 +116,7 @@ pub fn synchronize_package_uid() -> io::Result<()> {
     for _ in 0..max_retry {
         match read_lines("/data/system/packages.list") {
             Ok(lines) => {
-                let lines: Vec<_> = lines.filter_map(|line| line.ok()).collect();
+                let lines: Vec<_> = lines.map_while(Result::ok).collect();
 
                 let mut package_configs = read_ap_package_config();
 
