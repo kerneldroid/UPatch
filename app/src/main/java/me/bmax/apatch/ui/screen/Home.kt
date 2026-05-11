@@ -38,6 +38,9 @@ import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -272,8 +275,12 @@ private fun KStatusCard(
 ) {
 
     val showUninstallDialog = remember { mutableStateOf(false) }
+    val showAuthDialog = remember { mutableStateOf(false) }
     if (showUninstallDialog.value) {
         UninstallDialog(showDialog = showUninstallDialog, navigator)
+    }
+    if (showAuthDialog.value) {
+        AuthDialog(showDialog = showAuthDialog)
     }
 
     val cardBackgroundColor = when (kpState) {
@@ -385,6 +392,11 @@ private fun KStatusCard(
                 Column(
                     modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
+                    if (kpState == APApplication.State.UNKNOWN_STATE) {
+                        androidx.compose.material3.IconButton(onClick = { showAuthDialog.value = true }) {
+                            androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Default.Key, contentDescription = "Auth")
+                        }
+                    }
                     Button(onClick = {
                         when (kpState) {
                             APApplication.State.UNKNOWN_STATE -> {
@@ -773,6 +785,70 @@ fun LearnMoreCard() {
                     text = stringResource(R.string.home_click_to_learn_apatch),
                     style = MaterialTheme.typography.bodyMedium
                 )
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun AuthDialog(showDialog: MutableState<Boolean>) {
+    var skey by remember { mutableStateOf(me.bmax.apatch.APApplication.superKey) }
+    var keyVisible by remember { mutableStateOf(false) }
+
+    androidx.compose.material3.BasicAlertDialog(
+        onDismissRequest = { showDialog.value = false },
+        properties = DialogProperties(
+            decorFitsSystemWindows = true,
+            usePlatformDefaultWidth = false,
+        )
+    ) {
+        Surface(
+            modifier = Modifier
+                .width(320.dp)
+                .wrapContentHeight(),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+            tonalElevation = AlertDialogDefaults.TonalElevation,
+            color = AlertDialogDefaults.containerColor,
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = stringResource(id = R.string.patch_set_superkey),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                androidx.compose.material3.OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = skey,
+                    onValueChange = { skey = it },
+                    label = { Text(stringResource(id = R.string.patch_set_superkey)) },
+                    visualTransformation = if (keyVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Password),
+                    trailingIcon = {
+                        androidx.compose.material3.IconButton(onClick = { keyVisible = !keyVisible }) {
+                            androidx.compose.material3.Icon(
+                                imageVector = if (keyVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (keyVisible) "Hide password" else "Show password"
+                            )
+                        }
+                    }
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { showDialog.value = false }) {
+                        Text(stringResource(id = android.R.string.cancel))
+                    }
+                    TextButton(onClick = {
+                        me.bmax.apatch.util.APatchKeyHelper.writeSPSuperKey(skey)
+                        me.bmax.apatch.APApplication.superKey = skey
+                        showDialog.value = false
+                    }) {
+                        Text(stringResource(id = android.R.string.ok))
+                    }
+                }
             }
         }
     }
