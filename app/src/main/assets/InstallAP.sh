@@ -25,7 +25,6 @@ kernelFlagsErr() {
 
 apatchNote() {
   ui_print "- UPatch patch done"
-  ui_print "- UPatch key is: Ap$skey"
   ui_print "- The original boot image was saved to /data/boot.img"
   ui_print "- If you hit a boot loop, reboot to recovery and flash it"
   exit 0
@@ -45,7 +44,7 @@ patch_boot_image() {
   "$KPTOOLS" -i ./kernel -f | grep -q 'CONFIG_KALLSYMS=y' || kernelFlagsErr
 
   mv -f kernel kernel-origin || failed
-  "$KPTOOLS" -p --image kernel-origin --skey "Ap$skey" --kpimg ./assets/kpimg --out ./kernel > "$LOG_FILE" 2>&1 || failed
+  "$KPTOOLS" -p --image kernel-origin --kpimg ./assets/kpimg --out ./kernel > "$LOG_FILE" 2>&1 || failed
   ui_printfile "$LOG_FILE"
 
   "$KPTOOLS" repack boot.img || failed
@@ -62,7 +61,6 @@ main() {
   chmod a+x ./assets/kpimg "$KPTOOLS"
 
   slot=$(getprop ro.boot.slot_suffix)
-  skey=$(cut -d - -f1 /proc/sys/kernel/random/uuid)
 
   if [ -n "$slot" ]; then
     ui_print ""

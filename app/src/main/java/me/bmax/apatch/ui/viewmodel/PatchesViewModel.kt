@@ -60,7 +60,7 @@ class PatchesViewModel : ViewModel() {
     var bootDev by mutableStateOf("")
     var kimgInfo by mutableStateOf(KPModel.KImgInfo("", false))
     var kpimgInfo by mutableStateOf(KPModel.KPImgInfo("", "", "", "", ""))
-    var superkey by mutableStateOf(APApplication.superKey)
+    var superkey by mutableStateOf("")
     var existedExtras = mutableStateListOf<KPModel.IExtraInfo>()
     var newExtras = mutableStateListOf<KPModel.IExtraInfo>()
     var newExtrasFileName = mutableListOf<String>()
@@ -153,7 +153,7 @@ class PatchesViewModel : ViewModel() {
                     kpimg["version"].toString(),
                     kpimg["compile_time"].toString(),
                     kpimg["config"].toString(),
-                    APApplication.superKey,     // current key
+                    "",     // manager no longer keeps a separate superkey
                     kpimg["root_superkey"].toString(),   // empty
                 )
             } else {
@@ -431,7 +431,7 @@ class PatchesViewModel : ViewModel() {
         val suFile = File("/system/bin/su")
         return suFile.exists() && suFile.canExecute()
     }
-    fun doPatch(mode: PatchMode) {
+    fun doPatch(mode: PatchMode, useKey: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             patching = true
             patchdone = false
@@ -460,10 +460,12 @@ class PatchesViewModel : ViewModel() {
                 // adapt for 0.10.7 and lower KP
                 var isKpOld = false
 
+                val superkey = if (useKey && this@PatchesViewModel.superkey.isNotEmpty()) this@PatchesViewModel.superkey else "su"
+
                 if (mode == PatchMode.PATCH_AND_INSTALL || mode == PatchMode.INSTALL_TO_NEXT_SLOT) {
                     val kpCheckCommand = shCommand(
                         APApplication.SUPERCMD,
-                        superkey,
+                        APApplication.superKey,
                         "-Z",
                         APApplication.MAGISK_SCONTEXT,
                         "-c",
