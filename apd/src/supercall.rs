@@ -263,8 +263,7 @@ pub fn refresh_ap_package_list(skey: &CStr, mutex: &Arc<Mutex<()>>) {
 pub fn privilege_apd_profile(superkey: &Option<String>) {
     let key = convert_superkey(superkey);
 
-    // Stealth: use standard AOSP su context instead of well-known magisk context
-    let all_allow_ctx = "u:r:su:s0";
+    let all_allow_ctx = "u:r:magisk:s0";
     let profile = SuProfile {
         uid: process::id().try_into().expect("PID conversion failed"),
         to_uid: 0,
