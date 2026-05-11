@@ -1,70 +1,59 @@
-name: Bug Report
-description: File a bug report for UPatch. English ONLY.
-title: "[Bug]: "
-labels: ["bug"]
+name: Bug report
+description: Report a bug of UPatch
+
 body:
   - type: markdown
     attributes:
       value: |
-        ## **STOP AND READ**
-        - This repository is **ENGLISH ONLY**. Issues in other languages will be closed.
-        - Ensure you have read `CONTRIBUTING.md`.
-        - Do **NOT** report KernelPatch issues (e.g., kernel panics, patching failures) here. Report them to the KernelPatch upstream.
-        - Provide **TEXT LOGS**. Do NOT upload screenshots of text logs.
+        Please write in English. Do **NOT** report KernelPatch issues (e.g., kernel panics, patching failures) here. Report them to the KernelPatch upstream.
   - type: checkboxes
-    id: prerequisites
+    id: requirements
     attributes:
-      label: Prerequisites
-      description: Check all that apply. If you skip these, your issue will be closed.
+      label: Requirements
       options:
-        - label: "I have searched the existing issues."
-          required: true
-        - label: "I have read CONTRIBUTING.md."
-          required: true
-        - label: "This is NOT a kernel panic or a direct KernelPatch core failure."
-          required: true
-        - label: "My title is in English."
-          required: true
-  - type: textarea
-    id: description
+        - label: I have searched the existing issues
+        - label: UPatch is downloaded from official channels (GitHub release)
+        - label: This is NOT a kernel panic or a direct KernelPatch core failure
+  - type: input
+    id: upatch_version
     attributes:
-      label: Description
-      description: A clear and concise description of what the bug is.
-    validations:
-      required: true
-  - type: textarea
-    id: reproduction
-    attributes:
-      label: Reproduction Steps
-      description: Provide precise, step-by-step instructions to reproduce the behavior.
-      placeholder: |
-        1. Go to '...'
-        2. Click on '...'
-        3. See error
-    validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected Behavior
-      description: A clear and concise description of what you expected to happen.
+      label: UPatch version
     validations:
       required: true
   - type: input
-    id: device_info
+    id: kernelpatch_version
     attributes:
-      label: Device Information
-      description: Provide device model, Android version, Kernel version, etc.
+      label: KernelPatch version
+    validations:
+      required: true
+  - type: input
+    id: android_version
+    attributes:
+      label: Android version
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: What did you do
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs / Bug Report
-      description: Paste text logs in the code block below, or attach the manager-generated bug report archive. NO SCREENSHOTS OF TEXT.
-      value: |
-        ```log
-        Paste logs here
-        ```
+      label: What happened
+      description: Provide TEXT LOGS. You can attach the manager-generated bug report archive. NO SCREENSHOTS OF TEXT.
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: What do you expect
     validations:
       required: true

@@ -288,7 +288,24 @@ request_zip_size_check() {
   reqSizeM=`unzip -l "$1" | tail -n 1 | awk '{ print int(($1 - 1) / 1048576 + 1) }'`
 }
 
-boot_actions() { return; }
+boot_actions() {
+  if [ ! -f "$NVBASE/jq" ]; then
+    local apk_path=$(find /data/app -name "base.apk" -path "*/dev.upatch.manager-*" 2>/dev/null | head -n 1)
+    if [ -n "$apk_path" ] && [ -f "$apk_path" ]; then
+      mkdir -p /data/local/tmp/jq_extract
+      if unzip -o "$apk_path" "jq/jq" -d /data/local/tmp/jq_extract >&2; then
+        if [ -f "/data/local/tmp/jq_extract/jq/jq" ]; then
+          cp /data/local/tmp/jq_extract/jq/jq "$NVBASE/jq"
+          chmod 755 "$NVBASE/jq"
+          rm -rf /data/local/tmp/jq_extract
+        fi
+      else
+        rm -rf /data/local/tmp/jq_extract
+      fi
+    fi
+  fi
+  return
+}
 
 # Require ZIPFILE to be set
 is_legacy_script() {
@@ -366,7 +383,7 @@ install_module() {
     set_permissions
   else
     print_title "$MODNAME" "by $MODAUTH"
-    print_title "Module System"
+    print_title "Powered by UPatch"
 
     unzip -o "$ZIPFILE" customize.sh -d $MODPATH >&2
 

@@ -369,7 +369,7 @@ install_module() {
     set_permissions
   else
     print_title "$MODNAME" "by $MODAUTH"
-    print_title "Module System"
+    print_title "Powered by UPatch"
 
     unzip -o "$ZIPFILE" customize.sh -d $MODPATH >&2
 
