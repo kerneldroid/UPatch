@@ -71,7 +71,7 @@ class APApplication : Application(), Thread.UncaughtExceptionHandler {
         private const val RESETPROP_BIN_PATH = APATCH_BIN_FOLDER + "resetprop"
         private const val KPTOOLS_BIN_PATH = APATCH_BIN_FOLDER + "kptools"
         const val DEFAULT_SCONTEXT = "u:r:untrusted_app:s0"
-        const val MAGISK_SCONTEXT = "u:r:su:s0"
+        const val MAGISK_SCONTEXT = "u:r:magisk:s0"
 
         private const val DEFAULT_SU_PATH = "/system/bin/kp"
         private const val LEGACY_SU_PATH = "/system/bin/su"
