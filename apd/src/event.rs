@@ -336,16 +336,21 @@ pub fn start_uid_listener() -> Result<()> {
     {
         let mutex_clone = mutex.clone();
         thread::spawn(move || {
-            let mut signals = Signals::new(&[SIGTERM, SIGINT, SIGPWR]).unwrap();
+            let mut signals = match Signals::new([SIGTERM, SIGINT, SIGPWR]) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("[shutdown_listener] failed to create signals: {}", e);
+                    return;
+                }
+            };
             for sig in signals.forever() {
                 log::warn!("[shutdown] Caught signal {sig}, refreshing package list...");
-                let skey = CStr::from_bytes_with_nul(b"su\0")
-                    .expect("[shutdown_listener] CStr::from_bytes_with_nul failed");
-                refresh_ap_package_list(&skey, &mutex_clone);
+                if let Ok(skey) = CStr::from_bytes_with_nul(c"su".to_bytes_with_nul()) {
+                    refresh_ap_package_list(skey, &mutex_clone);
+                }
                 break;
             }
-        });
-    }
+        });    }
 
     let mut watcher = INotifyWatcher::new(
         move |ev: notify::Result<Event>| match ev {
@@ -356,7 +361,9 @@ pub fn start_uid_listener() -> Result<()> {
             }) => {
                 if paths.contains(&sys_packages_list_tmp) {
                     info!("[uid_monitor] System packages list changed, sending to tx...");
-                    tx_clone.send(false).unwrap()
+                    if let Err(e) = tx_clone.send(false) {
+                        warn!("[uid_monitor] failed to send signal: {}", e);
+                    }
                 }
             }
             Err(err) => warn!("inotify error: {err}"),

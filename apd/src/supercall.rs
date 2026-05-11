@@ -198,7 +198,13 @@ fn convert_superkey(s: &Option<String>) -> Option<CString> {
 }
 
 pub fn refresh_ap_package_list(skey: &CStr, mutex: &Arc<Mutex<()>>) {
-    let _lock = mutex.lock().unwrap();
+    let _lock = match mutex.lock() {
+        Ok(l) => l,
+        Err(_) => {
+            error!("[refresh_ap_package_list] Failed to lock mutex");
+            return;
+        }
+    };
 
     let num = sc_su_uid_nums(skey);
     if num < 0 {
