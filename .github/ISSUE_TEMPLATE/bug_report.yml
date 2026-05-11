@@ -21,21 +21,10 @@ body:
     validations:
       required: true
   - type: input
-    id: kernelpatch_version
+    id: device_and_android
     attributes:
-      label: KernelPatch version
-    validations:
-      required: true
-  - type: input
-    id: android_version
-    attributes:
-      label: Android version
-    validations:
-      required: true
-  - type: input
-    id: device
-    attributes:
-      label: Device
+      label: Device and Android version
+      description: "Example: Google Pixel 7 Pro, Android 14"
     validations:
       required: true
   - type: textarea
