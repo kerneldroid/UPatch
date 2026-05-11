@@ -56,7 +56,10 @@ fn safe_module_dir(base: &Path, module_id: &str) -> Result<PathBuf> {
     Ok(base.join(module_id))
 }
 
-fn extract_archive_safely(archive: &mut zip::ZipArchive<fs::File>, destination: &Path) -> Result<()> {
+fn extract_archive_safely(
+    archive: &mut zip::ZipArchive<fs::File>,
+    destination: &Path,
+) -> Result<()> {
     fs::create_dir_all(destination)?;
     let destination = destination.canonicalize()?;
 
@@ -461,7 +464,10 @@ fn _install_module(zip: &str) -> Result<()> {
         bail!("module id not found in module.prop!");
     };
     let module_id = module_id.trim();
-    ensure!(is_valid_module_id(module_id), "Invalid module id in module.prop");
+    ensure!(
+        is_valid_module_id(module_id),
+        "Invalid module id in module.prop"
+    );
 
     // Check if this module is a metamodule
     let is_metamodule = metamodule::is_metamodule(&module_prop);
@@ -535,7 +541,8 @@ fn _install_module(zip: &str) -> Result<()> {
 
     let module_dir = safe_module_dir(modules_dir, module_id)?;
     let module_update_dir = safe_module_dir(modules_update_dir, module_id)?;
-    let module_update_tmp = modules_update_dir.join(format!(".tmp-{}-{}", module_id, std::process::id()));
+    let module_update_tmp =
+        modules_update_dir.join(format!(".tmp-{}-{}", module_id, std::process::id()));
     info!("module dir: {}", module_dir.display());
     if !module_dir.exists() {
         fs::create_dir(&module_dir).expect("Failed to create module folder");
@@ -553,7 +560,10 @@ fn _install_module(zip: &str) -> Result<()> {
     let file = fs::File::open(zip)?;
     let mut archive = zip::ZipArchive::new(file)?;
     extract_archive_safely(&mut archive, &module_update_tmp)?;
-    ensure!(module_update_tmp.join("module.prop").exists(), "module.prop missing after extraction");
+    ensure!(
+        module_update_tmp.join("module.prop").exists(),
+        "module.prop missing after extraction"
+    );
     std::fs::rename(&module_update_tmp, &module_update_dir)?;
 
     println!("- Running module installer");
