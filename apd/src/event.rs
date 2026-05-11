@@ -350,7 +350,8 @@ pub fn start_uid_listener() -> Result<()> {
                 }
                 break;
             }
-        });    }
+        });
+    }
 
     let mut watcher = INotifyWatcher::new(
         move |ev: notify::Result<Event>| match ev {
