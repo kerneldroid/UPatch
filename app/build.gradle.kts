@@ -190,8 +190,8 @@ android {
     }
 
     android.sourceSets.named("main") {
-        kotlin.directories += "build/generated/ksp/$name/kotlin"
-        jniLibs.directories += "libs"
+        kotlin.srcDir("build/generated/ksp/$name/kotlin")
+        jniLibs.srcDir("libs")
     }
 }
 
@@ -206,11 +206,8 @@ java {
     }
 }
 
-kotlin {
-    jvmToolchain(21)
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_21
-    }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
 }
 
 fun quoteBuildConfig(value: String): String =
