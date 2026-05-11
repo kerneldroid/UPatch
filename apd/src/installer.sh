@@ -453,6 +453,9 @@ TMPDIR=/dev/tmp
 POSTFSDATAD=$NVBASE/post-fs-data.d
 SERVICED=$NVBASE/service.d
 
-# Available to module scripts; not exported to avoid env detection
-MAGISK_VER=27.0
-MAGISK_VER_CODE=27000
+# Some modules dependents on this
+export MAGISK_VER=30.7
+export MAGISK_VER_CODE=30700
+export KSU=true
+export KSU_VER=3.2.4
+export KSU_VER_CODE=12000
