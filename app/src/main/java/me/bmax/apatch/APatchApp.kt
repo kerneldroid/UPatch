@@ -287,7 +287,9 @@ class APApplication : Application(), Thread.UncaughtExceptionHandler {
         // TODO: 1. make me root by kernel
         // TODO: 2. remove all usage of superkey
         sharedPreferences = getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
-        superKey = "su"
+        me.bmax.apatch.util.APatchKeyHelper.setSharedPreferences(sharedPreferences)
+        val savedKey = me.bmax.apatch.util.APatchKeyHelper.readSPSuperKey()
+        superKey = if (savedKey != null && savedKey.isNotEmpty()) savedKey else "su"
 
         okhttpClient =
             OkHttpClient.Builder().cache(Cache(File(cacheDir, "okhttp"), 10 * 1024 * 1024))
