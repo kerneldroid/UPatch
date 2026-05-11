@@ -14,6 +14,9 @@
 -dontwarn java.beans.IntrospectionException
 -dontwarn java.beans.PropertyDescriptor
 
+# Keep libsu internals to prevent NoSuchMethodError
+-keep class com.topjohnwu.superuser.internal.** { *; }
+
 # Keep ini4j Service Provider Interface
 -keep,allowobfuscation,allowoptimization class org.ini4j.spi.** { *; }
 
