@@ -1,3 +1,10 @@
+use crate::sepolicy::get_policy_main;
+use crate::{lua, module_config};
+use anyhow::{Context, Result, anyhow, bail, ensure};
+use const_format::concatcp;
+use is_executable::is_executable;
+use java_properties::PropertiesIter;
+use log::{debug, info, warn};
 #[cfg(unix)]
 use std::os::unix::{prelude::PermissionsExt, process::CommandExt};
 use std::{
@@ -9,13 +16,6 @@ use std::{
     process::Command,
     str::FromStr,
 };
-use crate::sepolicy::{get_policy_main};
-use crate::lua;
-use anyhow::{Context, Result, anyhow, bail, ensure};
-use const_format::concatcp;
-use is_executable::is_executable;
-use java_properties::PropertiesIter;
-use log::{info, warn};
 use zip_extensions::zip_extract_file_to_memory;
 
 #[allow(clippy::wildcard_imports)]
@@ -244,7 +244,7 @@ pub fn load_sepolicy_rule() -> Result<()> {
             "magiskpolicy".to_string(),
             "--live".to_string(),
             "--apply".to_string(),
-            rule_file.display().to_string()
+            rule_file.display().to_string(),
         ])?;
 
         Ok(())
@@ -255,6 +255,26 @@ pub fn load_sepolicy_rule() -> Result<()> {
 
 pub fn exec_script<T: AsRef<Path>>(path: T, wait: bool) -> Result<()> {
     info!("exec {}", path.as_ref().display());
+
+    let is_module_script = path.as_ref().starts_with(defs::MODULE_DIR);
+    // Extract module_id from path if it matches /data/adb/modules/{id}/...
+    let module_id = if is_module_script {
+        path.as_ref()
+            .strip_prefix(defs::MODULE_DIR)
+            .ok()
+            .and_then(|p| p.components().next())
+            .and_then(|c| c.as_os_str().to_str())
+            .map(ToString::to_string)
+    } else {
+        None
+    };
+
+    if is_module_script && module_id.is_none() {
+        debug!(
+            "Failed to extract module_id from script path '{}'. Script will run without AP_MODULE environment variable.",
+            path.as_ref().display()
+        );
+    }
 
     let mut command = &mut Command::new(assets::BUSYBOX_PATH);
     #[cfg(unix)]
@@ -287,6 +307,11 @@ pub fn exec_script<T: AsRef<Path>>(path: T, wait: bool) -> Result<()> {
                 defs::BINARY_DIR.trim_end_matches('/')
             ),
         );
+
+    // Set AP_MODULE environment variable
+    if let Some(id) = module_id {
+        command = command.env("AP_MODULE", id);
+    }
 
     let result = if wait {
         command.status().map(|_| ())
@@ -339,7 +364,7 @@ pub fn load_system_prop() -> Result<()> {
         info!("load {} system.prop", module.display());
 
         crate::resetprop::load_system_prop_file(&system_prop)?;
-        
+
         Ok(())
     })?;
 
@@ -378,6 +403,11 @@ pub fn prune_modules() -> Result<()> {
             && let Err(e) = exec_script(uninstaller, true)
         {
             warn!("Failed to exec uninstaller: {e}");
+        }
+
+        // Clear module configs before removing module directory
+        if let Err(e) = module_config::clear_module_configs(module_id) {
+            warn!("Failed to clear configs for {module_id}: {e}");
         }
 
         // Finally remove the module directory
@@ -446,7 +476,10 @@ fn _install_module(zip: &str) -> Result<()> {
     };
 
     // Check if it's safe to install regular module
-    if !is_metamodule && needs_mount && let Err(is_disabled) = metamodule::check_install_safety() {
+    if !is_metamodule
+        && needs_mount
+        && let Err(is_disabled) = metamodule::check_install_safety()
+    {
         println!("\n❌ Installation Blocked");
         println!("┌────────────────────────────────");
         println!("│ A metamodule with custom installer is active");
@@ -597,6 +630,47 @@ pub fn uninstall_module(id: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn _undo_uninstall_module(id: &str, update_dir: &str) -> Result<()> {
+    let dir = Path::new(update_dir);
+    ensure!(dir.exists(), "No module installed");
+
+    let mut found = false;
+    for entry in fs::read_dir(dir)?.flatten() {
+        let path = entry.path();
+        let module_prop = path.join("module.prop");
+        if !module_prop.exists() {
+            continue;
+        }
+
+        let content = fs::read(&module_prop)?;
+        let mut module_id = String::new();
+
+        PropertiesIter::new_with_encoding(Cursor::new(content), encoding_rs::UTF_8).read_into(
+            |k, v| {
+                if k == "id" {
+                    module_id = v;
+                }
+            },
+        )?;
+        if module_id == id {
+            let remove_file = path.join(defs::REMOVE_FILE_NAME);
+            fs::remove_file(remove_file).with_context(|| "Failed to remove removefile.")?;
+            found = true;
+            break;
+        }
+    }
+
+    ensure!(found, "Module not found");
+
+    let _ = mark_module_state(id, defs::REMOVE_FILE_NAME, false);
+    Ok(())
+}
+pub fn undo_uninstall_module(id: &str) -> Result<()> {
+    _undo_uninstall_module(id, defs::MODULE_DIR)?;
+    mark_update()?;
+    Ok(())
+}
+
 /// Read module.prop from the given module path and return as a HashMap
 pub fn read_module_prop(module_path: &Path) -> Result<HashMap<String, String>> {
     let module_prop = module_path.join("module.prop");
@@ -707,6 +781,15 @@ pub fn disable_all_modules() -> Result<()> {
 }
 
 fn _list_modules(path: &str) -> Vec<HashMap<String, String>> {
+    // Load all module configs once to minimize I/O overhead
+    let all_configs = match module_config::get_all_module_configs() {
+        Ok(configs) => configs,
+        Err(e) => {
+            warn!("Failed to load module configs: {e}");
+            HashMap::new()
+        }
+    };
+
     // first check enabled modules
     let dir = fs::read_dir(path);
     let Ok(dir) = dir else {
@@ -729,10 +812,16 @@ fn _list_modules(path: &str) -> Vec<HashMap<String, String>> {
         };
         let mut module_prop_map: HashMap<String, String> = HashMap::new();
         let encoding = encoding_rs::UTF_8;
-        let result =
-            PropertiesIter::new_with_encoding(Cursor::new(content), encoding).read_into(|k, v| {
+
+        if PropertiesIter::new_with_encoding(Cursor::new(content), encoding)
+            .read_into(|k, v| {
                 module_prop_map.insert(k, v);
-            });
+            })
+            .is_err()
+        {
+            warn!("Failed to parse module.prop: {}", module_prop.display());
+            continue;
+        }
 
         if !module_prop_map.contains_key("id") || module_prop_map["id"].is_empty() {
             match entry.file_name().to_str() {
@@ -762,10 +851,16 @@ fn _list_modules(path: &str) -> Vec<HashMap<String, String>> {
         module_prop_map.insert("web".to_owned(), web.to_string());
         module_prop_map.insert("action".to_owned(), action.to_string());
 
-        if result.is_err() {
-            warn!("Failed to parse module.prop: {}", module_prop.display());
-            continue;
+        // Apply module config overrides and extract managed features
+        if let Some(module_id) = module_prop_map.get("id")
+            && let Some(config) = all_configs.get(module_id.as_str())
+        {
+            // Apply override.description
+            if let Some(desc) = config.get("override.description") {
+                module_prop_map.insert("description".to_owned(), desc.clone());
+            }
         }
+
         modules.push(module_prop_map);
     }
 

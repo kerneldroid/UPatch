@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -17,6 +18,9 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -60,6 +64,7 @@ class WebUIActivity : ComponentActivity() {
     private lateinit var insets: Insets
     private var insetsContinuation: CancellableContinuation<Unit>? = null
     private var isInsetsEnabled = false
+    private var webCanGoBack = false
     private lateinit var fileChooserLauncher: ActivityResultLauncher<Intent>
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
 
@@ -71,6 +76,17 @@ class WebUIActivity : ComponentActivity() {
         }
 
         super.onCreate(savedInstanceState)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webCanGoBack) {
+                    webView?.goBack()
+                    return
+                }
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+            }
+        })
 
         setContent {
             APatchTheme {
@@ -212,15 +228,23 @@ class WebUIActivity : ComponentActivity() {
                     if (!packageName.isNullOrEmpty()) {
                         val icon = AppIconUtil.loadAppIconSync(this@WebUIActivity, packageName, 512)
                         if (icon != null) {
-                            val stream = java.io.ByteArrayOutputStream()
-                            icon.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
-                            val inputStream = java.io.ByteArrayInputStream(stream.toByteArray())
-                            return WebResourceResponse("image/png", null, inputStream)
+                            val stream = ByteArrayOutputStream()
+                            icon.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                            return WebResourceResponse(
+                                "image/png", null, 200, "OK",
+                                mapOf("Access-Control-Allow-Origin" to "*"),
+                                ByteArrayInputStream(stream.toByteArray())
+                            )
                         }
                     }
                 }
 
                 return webViewAssetLoader.shouldInterceptRequest(url)
+            }
+
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                webCanGoBack = view?.canGoBack() == true
+                super.doUpdateVisitedHistory(view, url, isReload)
             }
         }
 

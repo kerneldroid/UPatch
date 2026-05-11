@@ -69,8 +69,12 @@ fi
 mv -f kernel kernel.ori || { >&2 echo "- Failed to preserve original kernel image"; exit 1; }
 
 echo "- Patching kernel"
+
+KPT_ARGS=""
+[ "$SUPERKEY" != "su" ] && KPT_ARGS="-S $SUPERKEY"
+
 set -x
-./kptools -p -i kernel.ori -S "$SUPERKEY" -k kpimg -o kernel "$@"
+./kptools -p -i kernel.ori $KPT_ARGS -k kpimg -o kernel "$@"
 patch_rc=$?
 set +x
 
