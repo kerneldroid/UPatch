@@ -1,24 +1,17 @@
 name: Feature Request
-description: Suggest an idea for UPatch. English ONLY.
-title: "[Feature]: "
-labels: ["enhancement"]
+description: Suggest an idea for UPatch
+
 body:
   - type: markdown
     attributes:
       value: |
-        ## **STOP AND READ**
-        - This repository is **ENGLISH ONLY**. Requests in other languages will be closed.
-        - Ensure you have read `CONTRIBUTING.md`.
-        - Keep requests within the scope of the UPatch manager. Kernel core features belong upstream.
+        Please write in English. Keep requests within the scope of the UPatch manager. Kernel core features belong upstream.
   - type: checkboxes
-    id: prerequisites
+    id: requirements
     attributes:
-      label: Prerequisites
+      label: Requirements
       options:
-        - label: "I have searched the existing issues."
-          required: true
-        - label: "My title is in English."
-          required: true
+        - label: I have searched the existing issues
   - type: textarea
     id: problem
     attributes:
