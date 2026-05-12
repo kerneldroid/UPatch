@@ -505,11 +505,10 @@ private fun SetSuperKeyView(viewModel: PatchesViewModel) {
                         shape = RoundedCornerShape(50.0f),
                         onValueChange = {
                             skey = it
+                            viewModel.superkey = it
                             if (viewModel.checkSuperKeyValidation(it)) {
-                                viewModel.superkey = it
                                 showWarn = false
                             } else {
-                                viewModel.superkey = ""
                                 showWarn = true
                             }
                         },
