@@ -169,7 +169,6 @@ public class APatchKeyHelper {
             }
             if (!encKey.startsWith(V2_PREFIX + ':') && !decrypted.isEmpty()) {
                 writeSPSuperKey(decrypted);
-                requirePrefs().edit().remove(SUPER_KEY).remove(SUPER_KEY_IV).apply();
             }
             return decrypted;
         }
@@ -178,7 +177,6 @@ public class APatchKeyHelper {
         String key = requirePrefs().getString(SUPER_KEY, "");
         if (key != null && !key.isEmpty()) {
             writeSPSuperKey(key);
-            requirePrefs().edit().remove(SUPER_KEY).remove(SUPER_KEY_IV).apply();
             return key;
         }
         return "";
@@ -190,6 +188,11 @@ public class APatchKeyHelper {
         }
         String encrypted = encrypt(key);
         if (encrypted == null) {
+            requirePrefs().edit()
+                    .remove(SUPER_KEY_ENC)
+                    .remove(SUPER_KEY_IV)
+                    .putString(SUPER_KEY, key)
+                    .apply();
             return;
         }
         requirePrefs().edit()
