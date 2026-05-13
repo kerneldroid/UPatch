@@ -18,7 +18,7 @@ val managerAppNameValue = stringProperty("fork.appName", "UPatch")
 val managerArtifactNameValue = stringProperty("fork.artifactName", managerAppNameValue)
 
 val androidMinSdkVersion by extra(intProperty("android.minSdk", 26))
-val androidTargetSdkVersion by extra(intProperty("android.targetSdk", 37))
+val androidTargetSdkVersion by extra(intProperty("android.targetSdk", 36))
 val androidCompileSdkVersion by extra(intProperty("android.compileSdk", 37))
 val androidTargetSdkPreview by extra(stringProperty("android.targetSdkPreview", ""))
 val androidCompileSdkPreview by extra(stringProperty("android.compileSdkPreview", ""))

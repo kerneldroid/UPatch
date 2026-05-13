@@ -31,19 +31,19 @@
 -overloadaggressively
 -renamesourcefileattribute SourceFile
 
-# Stealth: strip ALL android.util.Log calls from release builds
-# This prevents any logcat-based detection from the manager APK
--assumenosideeffects class android.util.Log {
-    public static int v(...);
-    public static int d(...);
-    public static int i(...);
-    public static int w(...);
-    public static int e(...);
-    public static int println(...);
-    public static String getStackTraceString(...);
-}
-
-# Stealth: also strip kotlin logging wrappers
--assumenosideeffects class android.util.Log {
-    public static boolean isLoggable(java.lang.String, int);
-}
+# # Stealth: strip ALL android.util.Log calls from release builds
+# # This prevents any logcat-based detection from the manager APK
+# -assumenosideeffects class android.util.Log {
+#     public static int v(...);
+#     public static int d(...);
+#     public static int i(...);
+#     public static int w(...);
+#     public static int e(...);
+#     public static int println(...);
+#     public static String getStackTraceString(...);
+# }
+#
+# # Stealth: also strip kotlin logging wrappers
+# -assumenosideeffects class android.util.Log {
+#     public static boolean isLoggable(java.lang.String, int);
+# }
