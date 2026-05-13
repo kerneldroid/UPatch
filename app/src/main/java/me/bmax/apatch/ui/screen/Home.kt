@@ -844,6 +844,7 @@ fun AuthDialog(showDialog: MutableState<Boolean>) {
                     TextButton(onClick = {
                         me.bmax.apatch.util.APatchKeyHelper.writeSPSuperKey(skey)
                         me.bmax.apatch.APApplication.superKey = skey
+                        me.bmax.apatch.util.APatchCli.refresh()
                         showDialog.value = false
                     }) {
                         Text(stringResource(id = android.R.string.ok))
