@@ -168,6 +168,19 @@ fun KPModuleScreen(navigator: DestinationsNavigator) {
                 navigator.navigate(InstallScreenDestination(uri, MODULE_TYPE.KPM))
             }
 
+            val showLoadDialog = remember { mutableStateOf(false) }
+            var loadUri by remember { mutableStateOf<Uri?>(null) }
+
+            if (showLoadDialog.value && loadUri != null) {
+                KPMLoadDialog(
+                    showDialog = showLoadDialog,
+                    uri = loadUri!!,
+                    viewModel = viewModel,
+                    successToastText = successToastText,
+                    failToastText = failToastText
+                )
+            }
+
             val selectKpmLauncher = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.StartActivityForResult()
             ) {
@@ -177,18 +190,8 @@ fun KPModuleScreen(navigator: DestinationsNavigator) {
                 val data = it.data ?: return@rememberLauncherForActivityResult
                 val uri = data.data ?: return@rememberLauncherForActivityResult
 
-                // todo: args
-                scope.launch {
-                    val rc = loadModule(loadingDialog, uri, "")
-                    val toastText = if (rc == 0) successToastText else "$failToastText: $rc"
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            context, toastText, Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    viewModel.markNeedRefresh()
-                    viewModel.fetchModuleList()
-                }
+                loadUri = uri
+                showLoadDialog.value = true
             }
 
             var expanded by remember { mutableStateOf(false) }
@@ -601,5 +604,108 @@ private fun KPModuleItem(
             }
 
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun KPMLoadDialog(
+    showDialog: MutableState<Boolean>,
+    uri: Uri,
+    viewModel: KPModuleViewModel,
+    successToastText: String,
+    failToastText: String
+) {
+    var loadArgs by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val loadingDialog = rememberLoadingDialog()
+    val context = LocalContext.current
+
+    BasicAlertDialog(
+        onDismissRequest = { showDialog.value = false }, properties = DialogProperties(
+            decorFitsSystemWindows = true,
+            usePlatformDefaultWidth = false,
+        )
+    ) {
+        Surface(
+            modifier = Modifier
+                .width(310.dp)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(30.dp),
+            tonalElevation = AlertDialogDefaults.TonalElevation,
+            color = AlertDialogDefaults.containerColor,
+        ) {
+            Column(modifier = Modifier.padding(PaddingValues(all = 24.dp))) {
+                Box(
+                    Modifier
+                        .padding(PaddingValues(bottom = 16.dp))
+                        .align(Alignment.Start)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.kpm_args_dialog_title),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
+
+                Box(
+                    Modifier
+                        .weight(weight = 1f, fill = false)
+                        .align(Alignment.Start)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.kpm_args_dialog_content),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Box(
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    OutlinedTextField(
+                        value = loadArgs,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp),
+                        onValueChange = {
+                            loadArgs = it
+                        },
+                        shape = RoundedCornerShape(50.0f),
+                        label = { Text(stringResource(id = R.string.kpm_args)) },
+                        visualTransformation = VisualTransformation.None,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = { showDialog.value = false }) {
+                        Text(stringResource(id = android.R.string.cancel))
+                    }
+
+                    Button(onClick = {
+                        showDialog.value = false
+
+                        scope.launch {
+                            val rc = loadModule(loadingDialog, uri, loadArgs)
+                            val toastText = if (rc == 0) successToastText else "$failToastText: $rc"
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    context, toastText, Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            viewModel.markNeedRefresh()
+                            viewModel.fetchModuleList()
+                        }
+
+                    }, enabled = true) {
+                        Text(stringResource(id = android.R.string.ok))
+                    }
+                }
+            }
+        }
+        val dialogWindowProvider = LocalView.current.parent as DialogWindowProvider
+        APDialogBlurBehindUtils.setupWindowBlurListener(dialogWindowProvider.window)
     }
 }

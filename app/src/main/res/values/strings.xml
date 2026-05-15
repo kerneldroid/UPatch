@@ -253,4 +253,6 @@
     <string name="crash_handle_title">App crashed…</string>
     <string name="crash_handle_copy">Copy crash log</string>
     <string name="crash_handle_copied">Crash log copied to clipboard.</string>
+    <string name="kpm_args_dialog_title">Load KPModule</string>
+    <string name="kpm_args_dialog_content">Input load arguments:</string>
 </resources>
