@@ -404,12 +404,7 @@ private fun KStatusCard(
                             }
 
                             APApplication.State.KERNELPATCH_NEED_UPDATE -> {
-                                // todo: remove legacy compact for kp < 0.9.0
-                                if (Version.installedKPVUInt() < 0x900u) {
-                                    navigator.navigate(PatchesDestination(PatchesViewModel.PatchMode.PATCH_ONLY))
-                                } else {
-                                    navigator.navigate(InstallModeSelectScreenDestination)
-                                }
+                                navigator.navigate(InstallModeSelectScreenDestination)
                             }
 
                             APApplication.State.KERNELPATCH_NEED_REBOOT -> {
