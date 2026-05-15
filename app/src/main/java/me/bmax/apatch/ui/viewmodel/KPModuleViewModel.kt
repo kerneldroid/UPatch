@@ -61,23 +61,31 @@ class KPModuleViewModel : ViewModel() {
                 Log.d(TAG, "kpm list: $nameList")
                 modules = nameList.filter { it.isNotEmpty() }.map {
                     val infoline = Natives.kernelPatchModuleInfo(it)
-                    val spi = infoline.split('\n')
-                    val name = spi.find { it.startsWith("name=") }?.removePrefix("name=")
-                    val version = spi.find { it.startsWith("version=") }?.removePrefix("version=")
-                    val license = spi.find { it.startsWith("license=") }?.removePrefix("license=")
-                    val author = spi.find { it.startsWith("author=") }?.removePrefix("author=")
-                    val description =
-                        spi.find { it.startsWith("description=") }?.removePrefix("description=")
-                    val args = spi.find { it.startsWith("args=") }?.removePrefix("args=")
+                    var name = ""
+                    var version = ""
+                    var license = ""
+                    var author = ""
+                    var description = ""
+                    var args = ""
+                    for (line in infoline.split('\n')) {
+                        when {
+                            line.startsWith("name=") -> name = line.substring(5)
+                            line.startsWith("version=") -> version = line.substring(8)
+                            line.startsWith("license=") -> license = line.substring(8)
+                            line.startsWith("author=") -> author = line.substring(7)
+                            line.startsWith("description=") -> description = line.substring(12)
+                            line.startsWith("args=") -> args = line.substring(5)
+                        }
+                    }
                     val info = KPModel.KPMInfo(
                         KPModel.ExtraType.KPM,
-                        name ?: "",
+                        name,
                         "",
-                        args ?: "",
-                        version ?: "",
-                        license ?: "",
-                        author ?: "",
-                        description ?: ""
+                        args,
+                        version,
+                        license,
+                        author,
+                        description
                     )
                     info
                 }
