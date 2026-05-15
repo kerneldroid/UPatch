@@ -59,6 +59,7 @@ import me.bmax.apatch.ui.component.SwitchItem
 import me.bmax.apatch.ui.component.pinnedScrollBehavior
 import me.bmax.apatch.ui.viewmodel.SuperUserViewModel
 import me.bmax.apatch.util.PkgConfig
+import me.bmax.apatch.util.isValidSContext
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -186,8 +187,7 @@ private fun AppItem(
                         LabelText(label = config.profile.toUid.toString())
                         LabelText(
                             label = when {
-                                // todo: valid scontext ?
-                                config.profile.scontext.isNotEmpty() -> config.profile.scontext
+                                isValidSContext(config.profile.scontext) -> config.profile.scontext
                                 else -> stringResource(id = R.string.su_selinux_via_hook)
                             }
                         )
