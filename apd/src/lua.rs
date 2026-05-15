@@ -125,6 +125,15 @@ pub fn exec_stage_lua(stage: &str, wait: bool, superkey: &str) -> Result<()> {
 pub fn run_lua(id: &str, function: &str, on_each_module: bool, _wait: bool) -> mlua::Result<()> {
     let lua = unsafe { Lua::unsafe_new() };
 
+    // Disable dangerous Lua libraries and functions
+    lua.globals().set("os", mlua::Value::Nil)?;
+    lua.globals().set("io", mlua::Value::Nil)?;
+    lua.globals().set("debug", mlua::Value::Nil)?;
+    lua.globals().set("dofile", mlua::Value::Nil)?;
+    lua.globals().set("loadfile", mlua::Value::Nil)?;
+    lua.globals().set("load", mlua::Value::Nil)?;
+    lua.globals().set("loadstring", mlua::Value::Nil)?;
+
     let func = install_module_lua(&lua)?;
     lua.globals().set("install_module", func)?;
     lua.globals().set("info", info_lua(&lua)?)?;
