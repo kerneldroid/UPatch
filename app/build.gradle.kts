@@ -381,3 +381,7 @@ dependencies {
 
     compileOnly(libs.cxx)
 }
+
+dependencies {
+    testImplementation(libs.junit)
+}
