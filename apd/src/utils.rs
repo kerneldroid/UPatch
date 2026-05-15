@@ -1,16 +1,16 @@
 #[allow(unused_imports)]
-use std::fs::{Permissions, set_permissions};
+use std::fs::{set_permissions, Permissions};
 #[cfg(unix)]
 use std::os::unix::prelude::PermissionsExt;
 use std::{
     ffi::CString,
-    fs::{File, OpenOptions, create_dir_all, metadata},
+    fs::{create_dir_all, metadata, File, OpenOptions},
     io::{ErrorKind::AlreadyExists, Write},
     path::Path,
     process::{Command, Stdio},
 };
 
-use anyhow::{Context, Error, Ok, Result, bail};
+use anyhow::{bail, Context, Error, Ok, Result};
 use log::{info, warn};
 
 use crate::{defs, supercall::sc_su_get_safemode};
@@ -40,8 +40,13 @@ pub fn ensure_dir_exists<T: AsRef<Path>>(dir: T) -> Result<()> {
     }
 }
 
-// todo: ensure
 pub fn ensure_binary<T: AsRef<Path>>(path: T) -> Result<()> {
+    if !path.as_ref().is_file() {
+        anyhow::bail!(
+            "{} is not a regular file or does not exist",
+            path.as_ref().display()
+        );
+    }
     set_permissions(&path, Permissions::from_mode(0o755))?;
     Ok(())
 }
