@@ -38,10 +38,11 @@ class SuperUserViewModel : ViewModel() {
         private const val TAG = "SuperUserViewModel"
         private val appsLock = Any()
         var apps by mutableStateOf<List<AppInfo>>(emptyList())
+        var appsMap by mutableStateOf<Map<String, AppInfo>>(emptyMap())
 
         fun getAppIconDrawable(context: Context, packageName: String): Drawable? {
-            val appList = synchronized(appsLock) { apps }
-            val appDetail = appList.find { it.packageName == packageName }
+            val appMap = synchronized(appsLock) { appsMap }
+            val appDetail = appMap[packageName]
             return appDetail?.packageInfo?.applicationInfo?.loadIcon(context.packageManager)
         }
     }
@@ -160,6 +161,7 @@ class SuperUserViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     synchronized(appsLock) {
                         apps = newApps
+                        appsMap = newApps.associateBy { it.packageName }
                     }
                 }
             }
