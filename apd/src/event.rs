@@ -343,12 +343,12 @@ pub fn start_uid_listener() -> Result<()> {
                     return;
                 }
             };
-            for sig in signals.forever() {
+            if let Some(sig) = signals.forever().next() {
                 log::warn!("[shutdown] Caught signal {sig}, refreshing package list...");
                 if let Ok(skey) = CStr::from_bytes_with_nul(c"su".to_bytes_with_nul()) {
                     refresh_ap_package_list(skey, &mutex_clone);
                 }
-                break;
+
             }
         });
     }
