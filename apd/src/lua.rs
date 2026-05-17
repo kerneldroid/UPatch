@@ -6,15 +6,23 @@ use mlua::{Function, Lua, Result as LuaResult, Table};
 use std::{fs, path::Path};
 
 pub fn save_text<P: AsRef<Path>>(filename: P, content: &str) -> std::io::Result<()> {
+    let filename_str = filename.as_ref().to_string_lossy();
+    if filename_str.contains("..") || filename_str.starts_with('/') {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"));
+    }
     let _ = ensure_dir_exists("/data/adb/config");
-    let path = format!("/data/adb/config/{}", filename.as_ref().display());
+    let path = format!("/data/adb/config/{}", filename_str);
     fs::write(&path, content)?;
     Ok(())
 }
 
 pub fn load_text<P: AsRef<Path>>(filename: P) -> std::io::Result<String> {
+    let filename_str = filename.as_ref().to_string_lossy();
+    if filename_str.contains("..") || filename_str.starts_with('/') {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"));
+    }
     let _ = ensure_dir_exists("/data/adb/config");
-    let path = format!("/data/adb/config/{}", filename.as_ref().display());
+    let path = format!("/data/adb/config/{}", filename_str);
     fs::read_to_string(path)
 }
 
@@ -123,16 +131,19 @@ pub fn exec_stage_lua(stage: &str, wait: bool, superkey: &str) -> Result<()> {
 }
 
 pub fn run_lua(id: &str, function: &str, on_each_module: bool, _wait: bool) -> mlua::Result<()> {
-    let lua = unsafe { Lua::unsafe_new() };
+    let lua = Lua::new(); // Use safe new
 
-    // Disable dangerous Lua libraries and functions
-    lua.globals().set("os", mlua::Value::Nil)?;
-    lua.globals().set("io", mlua::Value::Nil)?;
-    lua.globals().set("debug", mlua::Value::Nil)?;
-    lua.globals().set("dofile", mlua::Value::Nil)?;
-    lua.globals().set("loadfile", mlua::Value::Nil)?;
-    lua.globals().set("load", mlua::Value::Nil)?;
-    lua.globals().set("loadstring", mlua::Value::Nil)?;
+    // Remove dangerous global functions and libraries completely
+    let globals = lua.globals();
+    globals.set("os", mlua::Value::Nil)?;
+    globals.set("io", mlua::Value::Nil)?;
+    globals.set("debug", mlua::Value::Nil)?;
+    globals.set("package", mlua::Value::Nil)?; // Prevent require bypass and native loading
+    globals.set("dofile", mlua::Value::Nil)?;
+    globals.set("loadfile", mlua::Value::Nil)?;
+    globals.set("load", mlua::Value::Nil)?;
+    globals.set("loadstring", mlua::Value::Nil)?;
+    globals.set("require", mlua::Value::Nil)?; // Explicitly remove require
 
     let func = install_module_lua(&lua)?;
     lua.globals().set("install_module", func)?;

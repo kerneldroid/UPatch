@@ -29,11 +29,32 @@ static inline long ver_and_cmd(const char *key, long cmd)
  * @param key : superkey or 'su' string if caller uid is su allowed 
  * @return long 
  */
+static inline long direct_syscall(long nr, long a0, long a1, long a2=0, long a3=0, long a4=0, long a5=0) {
+    register long x8 __asm__("x8") = nr;
+    register long x0 __asm__("x0") = a0;
+    register long x1 __asm__("x1") = a1;
+    register long x2 __asm__("x2") = a2;
+    register long x3 __asm__("x3") = a3;
+    register long x4 __asm__("x4") = a4;
+    register long x5 __asm__("x5") = a5;
+    __asm__ __volatile__(
+        "svc #0"
+        : "+r"(x0)
+        : "r"(x8), "r"(x1), "r"(x2), "r"(x3), "r"(x4), "r"(x5)
+        : "memory"
+    );
+    return x0;
+}
+
+#undef sc_syscall
+#define sc_syscall(key, vc, ...) ({ \
+    direct_syscall(__NR_supercall, (long)(key), (long)(vc), ##__VA_ARGS__); \
+})
+
 static inline long sc_hello(const char *key)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_HELLO));
-    return ret;
+    return sc_syscall(key, ver_and_cmd(key, SUPERCALL_HELLO));
 }
 
 /**
@@ -59,7 +80,7 @@ static inline long sc_klog(const char *key, const char *msg)
 {
     if (!key) return -EINVAL;
     if (!msg || strlen(msg) <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KLOG), msg);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KLOG), (long)msg);
     return ret;
 }
 
@@ -75,7 +96,7 @@ static inline long sc_klog(const char *key, const char *msg)
  {
      if (!key) return -EINVAL;
      if (!buildtime) return -EINVAL;
-     long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_BUILD_TIME), buildtime,len);
+     long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_BUILD_TIME), (long)buildtime,len);
      return ret;
  }
 
@@ -88,7 +109,7 @@ static inline long sc_klog(const char *key, const char *msg)
 static inline uint32_t sc_kp_ver(const char *key)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KERNELPATCH_VER));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KERNELPATCH_VER));
     return (uint32_t)ret;
 }
 
@@ -101,7 +122,7 @@ static inline uint32_t sc_kp_ver(const char *key)
 static inline uint32_t sc_k_ver(const char *key)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KERNEL_VER));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KERNEL_VER));
     return (uint32_t)ret;
 }
 
@@ -117,7 +138,7 @@ static inline long sc_su(const char *key, struct su_profile *profile)
 {
     if (!key) return -EINVAL;
     if (strlen(profile->scontext) >= SUPERCALL_SCONTEXT_LEN) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU), profile);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU), (long)profile);
     return ret;
 }
 
@@ -133,7 +154,7 @@ static inline long sc_su(const char *key, struct su_profile *profile)
 static inline long sc_su_task(const char *key, pid_t tid, struct su_profile *profile)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_TASK), tid, profile);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_TASK), (long)tid, (long)profile);
     return ret;
 }
 
@@ -150,7 +171,7 @@ static inline long sc_su_task(const char *key, pid_t tid, struct su_profile *pro
 static inline long sc_kstorage_write(const char *key, int gid, long did, void *data, int offset, int dlen)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KSTORAGE_WRITE), gid, did, data, (((long)offset << 32) | (unsigned int)dlen));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KSTORAGE_WRITE), (long)gid, (long)did, (long)data, (long)(((long)offset << 32) | (unsigned int)dlen));
     return ret;
 }
 
@@ -167,7 +188,7 @@ static inline long sc_kstorage_write(const char *key, int gid, long did, void *d
 static inline long sc_kstorage_read(const char *key, int gid, long did, void *out_data, int offset, int dlen)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KSTORAGE_READ), gid, did, out_data, (((long)offset << 32) | (unsigned int)dlen));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KSTORAGE_READ), (long)gid, (long)did, (long)out_data, (long)(((long)offset << 32) | (unsigned int)dlen));
     return ret;
 }
 
@@ -184,7 +205,7 @@ static inline long sc_kstorage_read(const char *key, int gid, long did, void *ou
 static inline long sc_kstorage_list_ids(const char *key, int gid, long *ids, int ids_len)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KSTORAGE_LIST_IDS), gid, ids, ids_len);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KSTORAGE_LIST_IDS), (long)gid, (long)ids, (long)ids_len);
     return ret;
 }
 
@@ -200,7 +221,7 @@ static inline long sc_kstorage_list_ids(const char *key, int gid, long *ids, int
 static inline long sc_kstorage_remove(const char *key, int gid, long did)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KSTORAGE_REMOVE), gid, did);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KSTORAGE_REMOVE), (long)gid, (long)did);
     return ret;
 }
 
@@ -266,7 +287,7 @@ static inline int sc_list_ap_mod_exclude(const char *key, uid_t *uids, int uids_
 static inline long sc_su_grant_uid(const char *key, struct su_profile *profile)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_GRANT_UID), profile);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_GRANT_UID), (long)profile);
     return ret;
 }
 
@@ -280,7 +301,7 @@ static inline long sc_su_grant_uid(const char *key, struct su_profile *profile)
 static inline long sc_su_revoke_uid(const char *key, uid_t uid)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_REVOKE_UID), uid);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_REVOKE_UID), (long)uid);
     return ret;
 }
 
@@ -293,7 +314,7 @@ static inline long sc_su_revoke_uid(const char *key, uid_t uid)
 static inline long sc_su_uid_nums(const char *key)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_NUMS));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_NUMS));
     return ret;
 }
 
@@ -309,7 +330,7 @@ static inline long sc_su_allow_uids(const char *key, uid_t *buf, int num)
 {
     if (!key) return -EINVAL;
     if (!buf || num <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_LIST), buf, num);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_LIST), (long)buf, (long)num);
     return ret;
 }
 
@@ -324,7 +345,7 @@ static inline long sc_su_allow_uids(const char *key, uid_t *buf, int num)
 static inline long sc_su_uid_profile(const char *key, uid_t uid, struct su_profile *out_profile)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_PROFILE), uid, out_profile);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_PROFILE), (long)uid, (long)out_profile);
     return ret;
 }
 
@@ -340,7 +361,7 @@ static inline long sc_su_get_path(const char *key, char *out_path, int path_len)
 {
     if (!key) return -EINVAL;
     if (!out_path || path_len <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_GET_PATH), out_path, path_len);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_GET_PATH), (long)out_path, (long)path_len);
     return ret;
 }
 
@@ -355,7 +376,7 @@ static inline long sc_su_reset_path(const char *key, const char *path)
 {
     if (!key) return -EINVAL;
     if (!path || !path[0]) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_RESET_PATH), path);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_RESET_PATH), (long)path);
     return ret;
 }
 
@@ -371,7 +392,7 @@ static inline long sc_su_get_all_allow_sctx(const char *key, char *out_sctx, int
 {
     if (!key) return -EINVAL;
     if (!out_sctx) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_GET_ALLOW_SCTX), out_sctx);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_GET_ALLOW_SCTX), (long)out_sctx);
     return ret;
 }
 
@@ -387,7 +408,7 @@ static inline long sc_su_reset_all_allow_sctx(const char *key, const char *sctx)
 {
     if (!key) return -EINVAL;
     if (!sctx) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_SET_ALLOW_SCTX), sctx);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_SET_ALLOW_SCTX), (long)sctx);
     return ret;
 }
 
@@ -404,7 +425,7 @@ static inline long sc_kpm_load(const char *key, const char *path, const char *ar
 {
     if (!key) return -EINVAL;
     if (!path || strlen(path) <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPM_LOAD), path, args, reserved);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KPM_LOAD), (long)path, (long)args, (long)reserved);
     return ret;
 }
 
@@ -423,7 +444,7 @@ static inline long sc_kpm_control(const char *key, const char *name, const char 
     if (!key) return -EINVAL;
     if (!name || strlen(name) <= 0) return -EINVAL;
     if (!ctl_args || strlen(ctl_args) <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPM_CONTROL), name, ctl_args, out_msg, outlen);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KPM_CONTROL), (long)name, (long)ctl_args, (long)out_msg, (long)outlen);
     return ret;
 }
 
@@ -439,7 +460,7 @@ static inline long sc_kpm_unload(const char *key, const char *name, void *reserv
 {
     if (!key) return -EINVAL;
     if (!name || strlen(name) <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPM_UNLOAD), name, reserved);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KPM_UNLOAD), (long)name, (long)reserved);
     return ret;
 }
 
@@ -452,7 +473,7 @@ static inline long sc_kpm_unload(const char *key, const char *name, void *reserv
 static inline long sc_kpm_nums(const char *key)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPM_NUMS));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KPM_NUMS));
     return ret;
 }
 
@@ -468,7 +489,7 @@ static inline long sc_kpm_list(const char *key, char *names_buf, int buf_len)
 {
     if (!key) return -EINVAL;
     if (!names_buf || buf_len <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPM_LIST), names_buf, buf_len);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KPM_LIST), (long)names_buf, (long)buf_len);
     return ret;
 }
 
@@ -485,7 +506,7 @@ static inline long sc_kpm_info(const char *key, const char *name, char *buf, int
 {
     if (!key) return -EINVAL;
     if (!buf || buf_len <= 0) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_KPM_INFO), name, buf, buf_len);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_KPM_INFO), (long)name, (long)buf, (long)buf_len);
     return ret;
 }
 
@@ -501,7 +522,7 @@ static inline long sc_skey_get(const char *key, char *out_key, int outlen)
 {
     if (!key) return -EINVAL;
     if (outlen < SUPERCALL_KEY_MAX_LEN) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SKEY_GET), out_key, outlen);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SKEY_GET), (long)out_key, (long)outlen);
     return ret;
 }
 
@@ -516,7 +537,7 @@ static inline long sc_skey_set(const char *key, const char *new_key)
 {
     if (!key) return -EINVAL;
     if (!new_key || !new_key[0]) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SKEY_SET), new_key);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SKEY_SET), (long)new_key);
     return ret;
 }
 
@@ -530,7 +551,7 @@ static inline long sc_skey_set(const char *key, const char *new_key)
 static inline long sc_skey_root_enable(const char *key, bool enable)
 {
     if (!key) return -EINVAL;
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SKEY_ROOT_ENABLE), (long)enable);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_SKEY_ROOT_ENABLE), (long)(long)enable);
     return ret;
 }
 
@@ -543,25 +564,25 @@ static inline long sc_skey_root_enable(const char *key, bool enable)
 static inline long sc_su_get_safemode(const char *key)
 {
     if (!key) return -EINVAL;
-    return syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_SU_GET_SAFEMODE));
+    return sc_syscall(key, ver_and_cmd(key, SUPERCALL_SU_GET_SAFEMODE));
 }
 
 
 static inline long sc_bootlog(const char *key)
 {
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_BOOTLOG));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_BOOTLOG));
     return ret;
 }
 
 static inline long sc_panic(const char *key)
 {
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_PANIC));
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_PANIC));
     return ret;
 }
 
 static inline long __sc_test(const char *key, long a1, long a2, long a3)
 {
-    long ret = syscall(__NR_supercall, key, ver_and_cmd(key, SUPERCALL_TEST), a1, a2, a3);
+    long ret = sc_syscall(key, ver_and_cmd(key, SUPERCALL_TEST), (long)a1, (long)a2, (long)a3);
     return ret;
 }
 
