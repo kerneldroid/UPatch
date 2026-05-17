@@ -115,29 +115,21 @@ class SuperUserViewModel : ViewModel() {
         isRefreshing = true
 
         try {
-            val result = connectRootService {
-                Log.w(TAG, "RootService disconnected")
-            }
-
             withContext(Dispatchers.IO) {
-                val binder = result.first
-                val allPackages = IAPRootService.Stub.asInterface(binder).getPackages(0)
+                // bypassed
+                val allPackages = apApp.packageManager.getInstalledPackages(0)
 
                 withContext(Dispatchers.Main) {
                     stopRootService()
                 }
                 val uids = Natives.suUids().toList()
-                Log.d(TAG, "all allows: $uids")
-
-                var configs: HashMap<Int, PkgConfig.Config> = HashMap()
-                thread {
-                    Natives.su()
-                    configs = PkgConfig.readConfigs()
-                }.join()
+                
+                Natives.su()
+                val configs = PkgConfig.readConfigs()
 
                 Log.d(TAG, "all configs: $configs")
 
-                val newApps = allPackages.list.map {
+                val newApps = allPackages.map {
                     val appInfo = it.applicationInfo
                     val uid = appInfo!!.uid
                     val actProfile = if (uids.contains(uid)) Natives.suProfile(uid) else null
@@ -151,22 +143,29 @@ class SuperUserViewModel : ViewModel() {
                         config.allow = 1
                         config.profile = actProfile
                     }
+                    val label = appInfo.loadLabel(apApp.packageManager).toString()
                     AppInfo(
-                        label = appInfo.loadLabel(apApp.packageManager).toString(),
+                        label = label,
                         packageInfo = it,
-                        config = config
+                        config = config,
+                        labelPinyin = HanziToPinyin.getInstance().toPinyinString(label).lowercase(),
+                        packageNameLower = it.packageName.lowercase()
                     )
                 }
 
                 withContext(Dispatchers.Main) {
-                    synchronized(appsLock) {
-                        apps = newApps
-                        appsMap = newApps.associateBy { it.packageName }
-                    }
+                    apps = newApps
+                    staticAppsMap = newApps.associateBy { it.packageName }
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch app list", e)
+        } finally {
+            isRefreshing = false
+        }
+    }
+}
+ch app list", e)
         } finally {
             isRefreshing = false
         }

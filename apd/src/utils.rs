@@ -41,13 +41,19 @@ pub fn ensure_dir_exists<T: AsRef<Path>>(dir: T) -> Result<()> {
 }
 
 pub fn ensure_binary<T: AsRef<Path>>(path: T) -> Result<()> {
-    if !path.as_ref().is_file() {
+    let path = path.as_ref();
+    let metadata = std::fs::symlink_metadata(path).with_context(|| {
+        format!("Failed to get metadata for {}", path.display())
+    })?;
+
+    if !metadata.is_file() {
         anyhow::bail!(
             "{} is not a regular file or does not exist",
-            path.as_ref().display()
+            path.display()
         );
     }
-    set_permissions(&path, Permissions::from_mode(0o755))?;
+    
+    set_permissions(path, Permissions::from_mode(0o755))?;
     Ok(())
 }
 

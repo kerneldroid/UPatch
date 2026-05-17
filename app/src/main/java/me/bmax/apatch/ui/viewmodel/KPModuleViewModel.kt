@@ -18,26 +18,27 @@ import java.util.Locale
 class KPModuleViewModel : ViewModel() {
     companion object {
         private const val TAG = "KPModuleViewModel"
-        private var modules by mutableStateOf<List<KPModel.KPMInfo>>(emptyList())
     }
 
+    var modules by mutableStateOf<List<KPModel.KPMInfo>>(emptyList())
     var search by mutableStateOf("")
     var isRefreshing by mutableStateOf(false)
         private set
 
 
     val moduleList by derivedStateOf {
+        val query = search.lowercase()
         val comparator = compareBy(
             comparator = Collator.getInstance(Locale.getDefault()),
             selector = KPModel.KPMInfo::name
         )
 
         modules.filter {
-            it.name.contains(search, true) || it.name.contains(search, true) || HanziToPinyin.getInstance()
-                .toPinyinString(it.name)?.contains(search, true) == true
-        }.sortedWith(comparator).also {
-            isRefreshing = false
-        }
+            it.name.contains(query, true) || 
+            it.description.contains(query, true) ||
+            it.author.contains(query, true) ||
+            HanziToPinyin.getInstance().toPinyinString(it.name)?.contains(query, true) == true
+        }.sortedWith(comparator)
     }
 
     var isNeedRefresh by mutableStateOf(false)
