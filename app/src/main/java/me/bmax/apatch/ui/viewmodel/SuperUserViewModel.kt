@@ -36,6 +36,10 @@ import kotlin.coroutines.suspendCoroutine
 class SuperUserViewModel : ViewModel() {
     companion object {
         private const val TAG = "SuperUserViewModel"
+        
+        // Icon loading still needs a way to find apps, but we should avoid static state if possible.
+        // For now, let's keep a cache if needed, but the primary state
+        // should be in the ViewModel instance.
         private val appsLock = Any()
         var apps by mutableStateOf<List<AppInfo>>(emptyList())
         var appsMap by mutableStateOf<Map<String, AppInfo>>(emptyMap())
@@ -49,7 +53,11 @@ class SuperUserViewModel : ViewModel() {
 
     @Parcelize
     data class AppInfo(
-        val label: String, val packageInfo: PackageInfo, val config: PkgConfig.Config
+        val label: String,
+        val packageInfo: PackageInfo,
+        val config: PkgConfig.Config,
+        val labelPinyin: String,
+        val packageNameLower: String
     ) : Parcelable {
         val packageName: String
             get() = packageInfo.packageName
@@ -74,10 +82,11 @@ class SuperUserViewModel : ViewModel() {
     }
 
     val appList by derivedStateOf {
+        val query = search.lowercase()
         sortedList.filter {
-            it.label.lowercase().contains(search.lowercase()) || it.packageName.lowercase()
-                .contains(search.lowercase()) || HanziToPinyin.getInstance()
-                .toPinyinString(it.label).contains(search.lowercase())
+            it.label.lowercase().contains(query) || 
+            it.packageNameLower.contains(query) || 
+            it.labelPinyin.contains(query)
         }.filter {
             it.uid == 2000 // Always show shell
                     || showSystemApps || it.packageInfo.applicationInfo!!.flags.and(ApplicationInfo.FLAG_SYSTEM) == 0
@@ -154,18 +163,14 @@ class SuperUserViewModel : ViewModel() {
                 }
 
                 withContext(Dispatchers.Main) {
-                    apps = newApps
-                    staticAppsMap = newApps.associateBy { it.packageName }
+                    synchronized(appsLock) {
+                        apps = newApps
+                        appsMap = newApps.associateBy { it.packageName }
+                    }
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch app list", e)
-        } finally {
-            isRefreshing = false
-        }
-    }
-}
-ch app list", e)
         } finally {
             isRefreshing = false
         }
