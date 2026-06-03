@@ -15,4 +15,11 @@ private
 .claude
 *.keystore
 *.apk
-test_*
+test_*/toolchain/
+/zlib-1.3.1/
+/zlib.tar.gz
+/KernelPatch-0.13.1/
+/kpimg-repo/
+/*.bin
+upatch-release.keystore
+local.properties

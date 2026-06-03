@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler) apply false
 }
 
-project.ext.set("kernelPatchVersion", "0.11.3")
+project.ext.set("kernelPatchVersion", "0.13.1")
 
 fun Project.stringProperty(name: String, defaultValue: String): String {
     return providers.gradleProperty(name).orNull?.trim()?.takeIf { it.isNotEmpty() } ?: defaultValue
@@ -30,9 +30,9 @@ val managerApplicationId by extra(stringProperty("fork.applicationId", "dev.upat
 val managerArtifactName by extra(managerArtifactNameValue)
 val managerSourceRepoUrl by extra(stringProperty("fork.sourceRepoUrl", "https://github.com/bmax121/UPatch"))
 val managerIssuesUrl by extra(stringProperty("fork.issuesUrl", "https://github.com/bmax121/UPatch/issues/new/choose"))
-val managerDocsUrl by extra(stringProperty("fork.docsUrl", "https://apatch.dev"))
+val managerDocsUrl by extra(stringProperty("fork.docsUrl", "https://upatch.dev"))
 val managerChannelUrl by extra(stringProperty("fork.channelUrl", "https://t.me/UPatchChannel"))
-val managerDiscussionUrl by extra(stringProperty("fork.discussionUrl", "https://t.me/Apatch_discuss"))
+val managerDiscussionUrl by extra(stringProperty("fork.discussionUrl", "https://t.me/UPatch_discuss"))
 val managerWeblateUrl by extra(stringProperty("fork.weblateUrl", "https://hosted.weblate.org/engage/UPatch"))
 val managerUpdateApiUrl by extra(stringProperty("fork.updateApiUrl", "https://api.github.com/repos/bmax121/UPatch/releases/latest"))
 val managerExpectedSignatureSha256 by extra(stringProperty("fork.expectedSignatureSha256", ""))
@@ -61,9 +61,7 @@ fun getGitDescribe(): String {
 }
 
 fun getVersionCode(): Int {
-    val commitCount = getGitCommitCount()
-    val major = 1
-    return major * 10000 + commitCount + 200
+    return 10240
 }
 
 fun getBranch(): String {
