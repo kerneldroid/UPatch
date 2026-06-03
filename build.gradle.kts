@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose.compiler) apply false
 }
 
-project.ext.set("kernelPatchVersion", "0.13.1")
+project.ext.set("kernelPatchVersion", "0.11.3")
 
 fun Project.stringProperty(name: String, defaultValue: String): String {
     return providers.gradleProperty(name).orNull?.trim()?.takeIf { it.isNotEmpty() } ?: defaultValue

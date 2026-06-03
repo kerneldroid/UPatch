@@ -11,14 +11,15 @@
 #include "apjni.hpp"
 #include "supercall.h"
 
+#define GET_KEY(s) ((s.get() == nullptr || strlen(s.get()) == 0) ? "su" : s.get())
+
 jboolean nativeReady(JNIEnv *env, jobject /* this */, jstring super_key_jstr) {
     ensureSuperKeyNonNull(super_key_jstr);
 
     const auto super_key = JUTFString(env, super_key_jstr);
-    if (super_key.get() == nullptr || strlen(super_key.get()) == 0) {
-        return sc_ready("su");
-    }
-    return sc_ready(super_key.get());
+    long ret = sc_hello(GET_KEY(super_key));
+    LOGI("nativeReady check: key=%s, ret=%lx", GET_KEY(super_key), ret);
+    return (jboolean)(ret == SUPERCALL_HELLO_MAGIC || (ret >= 0 && ret < 1000000));
 }
 
 jlong nativeKernelPatchVersion(JNIEnv *env, jobject /* this */, jstring super_key_jstr) {
@@ -26,7 +27,7 @@ jlong nativeKernelPatchVersion(JNIEnv *env, jobject /* this */, jstring super_ke
 
     const auto super_key = JUTFString(env, super_key_jstr);
 
-    return sc_kp_ver(super_key.get());
+    return sc_kp_ver(GET_KEY(super_key));
 }
 
 jstring nativeKernelPatchBuildTime(JNIEnv *env, jobject /* this */, jstring super_key_jstr) {
@@ -35,7 +36,7 @@ jstring nativeKernelPatchBuildTime(JNIEnv *env, jobject /* this */, jstring supe
     const auto super_key = JUTFString(env, super_key_jstr);
     char buf[4096] = { '\0' };
 
-    sc_get_build_time(super_key.get(), buf, sizeof(buf));
+    sc_get_build_time(GET_KEY(super_key), buf, sizeof(buf));
     return env->NewStringUTF(buf);
 }
 
@@ -50,7 +51,7 @@ jlong nativeSu(JNIEnv *env, jobject /* this */, jstring super_key_jstr, jint to_
         const auto selinux_context = JUTFString(env, selinux_context_jstr);
         strncpy(profile.scontext, selinux_context.get(), sizeof(profile.scontext) - 1);
     }
-    long rc = sc_su(super_key.get(), &profile);
+    long rc = sc_su(GET_KEY(super_key), &profile);
     if (rc < 0) [[unlikely]] {
         LOGE("nativeSu error: %ld", rc);
     }
@@ -62,21 +63,21 @@ jint nativeSetUidExclude(JNIEnv *env, jobject /* this */, jstring super_key_jstr
     ensureSuperKeyNonNull(super_key_jstr);
 
     const auto super_key = JUTFString(env, super_key_jstr);
-    return static_cast<int>(sc_set_ap_mod_exclude(super_key.get(), (uid_t) uid, exclude));
+    return static_cast<int>(sc_set_ap_mod_exclude(GET_KEY(super_key), (uid_t) uid, exclude));
 }
 
 jint nativeGetUidExclude(JNIEnv *env, jobject /* this */, jstring super_key_jstr, uid_t uid) {
     ensureSuperKeyNonNull(super_key_jstr);
 
     const auto super_key = JUTFString(env, super_key_jstr);
-    return static_cast<int>(sc_get_ap_mod_exclude(super_key.get(), uid));
+    return static_cast<int>(sc_get_ap_mod_exclude(GET_KEY(super_key), uid));
 }
 
 jintArray nativeSuUids(JNIEnv *env, jobject /* this */, jstring super_key_jstr) {
     ensureSuperKeyNonNull(super_key_jstr);
 
     const auto super_key = JUTFString(env, super_key_jstr);
-    int num = static_cast<int>(sc_su_uid_nums(super_key.get()));
+    int num = static_cast<int>(sc_su_uid_nums(GET_KEY(super_key)));
 
     if (num <= 0) [[unlikely]] {
         LOGW("SuperUser Count less than 1, skip allocating vector...");
@@ -85,7 +86,7 @@ jintArray nativeSuUids(JNIEnv *env, jobject /* this */, jstring super_key_jstr) 
 
     std::vector<int> uids(num);
 
-    long n = sc_su_allow_uids(super_key.get(), (uid_t *) uids.data(), num);
+    long n = sc_su_allow_uids(GET_KEY(super_key), (uid_t *) uids.data(), num);
     if (n > 0) [[unlikely]] {
         auto array = env->NewIntArray(n);
         env->SetIntArrayRegion(array, 0, n, uids.data());
@@ -100,7 +101,7 @@ jobject nativeSuProfile(JNIEnv *env, jobject /* this */, jstring super_key_jstr,
 
     const auto super_key = JUTFString(env, super_key_jstr);
     struct su_profile profile{};
-    long rc = sc_su_uid_profile(super_key.get(), (uid_t) uid, &profile);
+    long rc = sc_su_uid_profile(GET_KEY(super_key), (uid_t) uid, &profile);
     if (rc < 0) [[unlikely]] {
         LOGE("nativeSuProfile error: %ld\n", rc);
         return nullptr;
@@ -125,7 +126,7 @@ jlong nativeLoadKernelPatchModule(JNIEnv *env, jobject /* this */, jstring super
     const auto super_key = JUTFString(env, super_key_jstr);
     const auto module_path = JUTFString(env, module_path_jstr);
     const auto args = JUTFString(env, args_jstr);
-    long rc = sc_kpm_load(super_key.get(), module_path.get(), args.get(), nullptr);
+    long rc = sc_kpm_load(GET_KEY(super_key), module_path.get(), args.get(), nullptr);
     if (rc < 0) [[unlikely]] {
         LOGE("nativeLoadKernelPatchModule error: %ld", rc);
     }
@@ -141,7 +142,7 @@ jobject nativeControlKernelPatchModule(JNIEnv *env, jobject /* this */, jstring 
     const auto control_args = JUTFString(env, control_args_jstr);
 
     char buf[4096] = { '\0' };
-    long rc = sc_kpm_control(super_key.get(), module_name.get(), control_args.get(), buf, sizeof(buf));
+    long rc = sc_kpm_control(GET_KEY(super_key), module_name.get(), control_args.get(), buf, sizeof(buf));
     if (rc < 0) [[unlikely]] {
         LOGE("nativeControlKernelPatchModule error: %ld", rc);
     }
@@ -163,7 +164,7 @@ jlong nativeUnloadKernelPatchModule(JNIEnv *env, jobject /* this */, jstring sup
 
     const auto super_key = JUTFString(env, super_key_jstr);
     const auto module_name = JUTFString(env, module_name_jstr);
-    long rc = sc_kpm_unload(super_key.get(), module_name.get(), nullptr);
+    long rc = sc_kpm_unload(GET_KEY(super_key), module_name.get(), nullptr);
     if (rc < 0) [[unlikely]] {
         LOGE("nativeUnloadKernelPatchModule error: %ld", rc);
     }
@@ -175,7 +176,7 @@ jlong nativeKernelPatchModuleNum(JNIEnv *env, jobject /* this */, jstring super_
     ensureSuperKeyNonNull(super_key_jstr);
 
     const auto super_key = JUTFString(env, super_key_jstr);
-    long rc = sc_kpm_nums(super_key.get());
+    long rc = sc_kpm_nums(GET_KEY(super_key));
     if (rc < 0) [[unlikely]] {
         LOGE("nativeKernelPatchModuleNum error: %ld", rc);
     }
@@ -189,7 +190,7 @@ jstring nativeKernelPatchModuleList(JNIEnv *env, jobject /* this */, jstring sup
     const auto super_key = JUTFString(env, super_key_jstr);
 
     char buf[4096] = { '\0' };
-    long rc = sc_kpm_list(super_key.get(), buf, sizeof(buf));
+    long rc = sc_kpm_list(GET_KEY(super_key), buf, sizeof(buf));
     if (rc < 0) [[unlikely]] {
         LOGE("nativeKernelPatchModuleList error: %ld", rc);
     }
@@ -203,7 +204,7 @@ jstring nativeKernelPatchModuleInfo(JNIEnv *env, jobject /* this */, jstring sup
     const auto super_key = JUTFString(env, super_key_jstr);
     const auto module_name = JUTFString(env, module_name_jstr);
     char buf[1024] = { '\0' };
-    long rc = sc_kpm_info(super_key.get(), module_name.get(), buf, sizeof(buf));
+    long rc = sc_kpm_info(GET_KEY(super_key), module_name.get(), buf, sizeof(buf));
     if (rc < 0) [[unlikely]] {
         LOGE("nativeKernelPatchModuleInfo error: %ld", rc);
     }
@@ -220,14 +221,14 @@ jlong nativeGrantSu(JNIEnv *env, jobject /* this */, jstring super_key_jstr, jin
     profile.uid = uid;
     profile.to_uid = to_uid;
     if (selinux_context) strncpy(profile.scontext, selinux_context, sizeof(profile.scontext) - 1);
-    return sc_su_grant_uid(super_key.get(), &profile);
+    return sc_su_grant_uid(GET_KEY(super_key), &profile);
 }
 
 jlong nativeRevokeSu(JNIEnv *env, jobject /* this */, jstring super_key_jstr, jint uid) {
     ensureSuperKeyNonNull(super_key_jstr);
 
     const auto super_key = JUTFString(env, super_key_jstr);
-    return sc_su_revoke_uid(super_key.get(), (uid_t) uid);
+    return sc_su_revoke_uid(GET_KEY(super_key), (uid_t) uid);
 }
 
 jstring nativeSuPath(JNIEnv *env, jobject /* this */, jstring super_key_jstr) {
@@ -235,7 +236,7 @@ jstring nativeSuPath(JNIEnv *env, jobject /* this */, jstring super_key_jstr) {
 
     const auto super_key = JUTFString(env, super_key_jstr);
     char buf[SU_PATH_MAX_LEN] = { '\0' };
-    long rc = sc_su_get_path(super_key.get(), buf, sizeof(buf));
+    long rc = sc_su_get_path(GET_KEY(super_key), buf, sizeof(buf));
     if (rc < 0) [[unlikely]] {
         LOGE("nativeSuPath error: %ld", rc);
     }
@@ -249,7 +250,7 @@ jboolean nativeResetSuPath(JNIEnv *env, jobject /* this */, jstring super_key_js
     const auto super_key = JUTFString(env, super_key_jstr);
     const auto su_path = JUTFString(env, su_path_jstr);
 
-    return sc_su_reset_path(super_key.get(), su_path.get()) == 0;
+    return sc_su_reset_path(GET_KEY(super_key), su_path.get()) == 0;
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void * /*reserved*/) {
