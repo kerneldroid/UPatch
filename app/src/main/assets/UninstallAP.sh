@@ -16,7 +16,7 @@ ui_printfile() {
   done < "$1"
 }
 
-apatchNote() {
+upatchNote() {
   ui_print "- UPatch unpatch done"
   exit 0
 }
@@ -44,7 +44,7 @@ unpatch_boot_image() {
   "$KPTOOLS" repack boot.img || failed
   [ -f "$WORKDIR/new-boot.img" ] || failed
   dd if="$WORKDIR/new-boot.img" of="$target_block" || failed
-  apatchNote
+  upatchNote
 }
 
 main() {

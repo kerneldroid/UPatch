@@ -178,13 +178,13 @@ pub fn root_shell() -> Result<()> {
         }
     }
 
-    // add /data/adb/ap/bin to PATH
+    // add /data/adb/up/bin to PATH
     #[cfg(any(target_os = "linux", target_os = "android"))]
     add_path_to_env(defs::BINARY_DIR)?;
 
     // when AP_RC_PATH exists and ENV is not set, set ENV to AP_RC_PATH
-    if PathBuf::from(defs::AP_RC_PATH).exists() && env::var("ENV").is_err() {
-        command = command.env("ENV", defs::AP_RC_PATH);
+    if PathBuf::from(defs::UP_RC_PATH).exists() && env::var("ENV").is_err() {
+        command = command.env("ENV", defs::UP_RC_PATH);
     }
     #[cfg(target_os = "android")]
     if !matches.opt_present("no-pty") {

@@ -405,7 +405,7 @@ get_flags() {
   [ -z $RECOVERYMODE ] && RECOVERYMODE=false
 }
 
-install_apatch() {
+install_upatch() {
   cd $MAGISKBIN
 
   # Source the boot patcher

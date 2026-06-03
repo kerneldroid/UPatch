@@ -3,6 +3,8 @@
 import com.android.build.gradle.tasks.PackageAndroidArtifact
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URI
+import java.util.Properties
+import java.io.File
 
 plugins {
     alias(libs.plugins.agp.app)
@@ -37,13 +39,6 @@ val managerEnforceSignatureVerification: Boolean by rootProject.extra
 val androidCompileSdkPreview: String by rootProject.extra
 val androidTargetSdkPreview: String by rootProject.extra
 
-apksign {
-    storeFileProperty = "KEYSTORE_FILE"
-    storePasswordProperty = "KEYSTORE_PASSWORD"
-    keyAliasProperty = "KEY_ALIAS"
-    keyPasswordProperty = "KEY_PASSWORD"
-}
-
 val ccache = System.getenv("PATH")?.split(File.pathSeparator)
     ?.map { File(it, "ccache") }?.firstOrNull { it.exists() }?.absolutePath
 
@@ -64,8 +59,27 @@ val baseArgs = mutableListOf(
     "-DCMAKE_CXX_VISIBILITY_PRESET=hidden", "-DCMAKE_C_VISIBILITY_PRESET=hidden"
 ).apply { if (ccache != null) add("-DANDROID_CCACHE=$ccache") }
 
+val signingProps = Properties()
+val propFile = File(project.rootDir, "local.properties")
+if (propFile.exists()) {
+    propFile.inputStream().use { signingProps.load(it) }
+}
+
 android {
-    namespace = "me.bmax.apatch"
+    namespace = "me.bmax.upatch"
+    
+    signingConfigs {
+        create("release") {
+            val ksFile = signingProps.getProperty("KEYSTORE_FILE")?.let { file(it) }
+            if (ksFile != null && ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = signingProps.getProperty("KEYSTORE_PASSWORD")
+                keyAlias = signingProps.getProperty("KEY_ALIAS")
+                keyPassword = signingProps.getProperty("KEY_PASSWORD")
+            }
+        }
+    }
+
     if (androidCompileSdkPreview.isNotBlank()) {
         compileSdkPreview = androidCompileSdkPreview
     } else {
@@ -88,6 +102,9 @@ android {
             }
         }
         release {
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
@@ -195,7 +212,6 @@ android {
     }
 }
 
-// https://stackoverflow.com/a/77745844
 tasks.withType<PackageAndroidArtifact> {
     doFirst { appMetadata.asFile.orNull?.writeText("") }
 }
@@ -257,23 +273,21 @@ fun downloadFile(url: String, destFile: File) {
 
 registerDownloadTask(
     taskName = "downloadKpimg",
-    srcUrl = "https://github.com/bmax121/KernelPatch/releases/download/$kernelPatchVersion/kpimg-android",
+    srcUrl = "https://github.com/kerneldroid/kpimg-upatch/releases/download/v$kernelPatchVersion/kpimg-android",
     destPath = "${project.projectDir}/src/main/assets/kpimg",
     project = project
 )
 
 registerDownloadTask(
     taskName = "downloadKptools",
-    srcUrl = "https://github.com/bmax121/KernelPatch/releases/download/0.13.1/kptools-android",
+    srcUrl = "https://github.com/kerneldroid/kpimg-upatch/releases/download/v$kernelPatchVersion/kptools-android",
     destPath = "${project.projectDir}/libs/arm64-v8a/libkptools.so",
     project = project
 )
 
-// Compat kp version less than 0.10.7
-// TODO: Remove in future
 registerDownloadTask(
     taskName = "downloadCompatKpatch",
-    srcUrl = "https://github.com/bmax121/KernelPatch/releases/download/0.10.7/kpatch-android",
+    srcUrl = "https://github.com/kerneldroid/kpimg-upatch/releases/download/v$kernelPatchVersion/kpatch-android",
     destPath = "${project.projectDir}/libs/arm64-v8a/libkpatch.so",
     project = project
 )
@@ -295,11 +309,9 @@ tasks.getByName("preBuild").dependsOn(
     "mergeScripts",
 )
 
-// https://github.com/bbqsrc/cargo-ndk
-// cargo ndk -t arm64-v8a build --release
 tasks.register<Exec>("cargoBuild") {
     executable("cargo")
-    args("ndk", "-t", "arm64-v8a", "build", "--release")
+    args("ndk", "-t", "arm64-v8a", "build", "--release", "-Z", "build-std")
     workingDir("${project.rootDir}/apd")
 }
 

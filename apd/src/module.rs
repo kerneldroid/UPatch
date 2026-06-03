@@ -274,7 +274,7 @@ pub fn exec_script<T: AsRef<Path>>(path: T, wait: bool) -> Result<()> {
 
     if is_module_script && module_id.is_none() {
         debug!(
-            "Failed to extract module_id from script path '{}'. Script will run without AP_MODULE environment variable.",
+            "Failed to extract module_id from script path '{}'. Script will run without UP_MODULE environment variable.",
             path.as_ref().display()
         );
     }
@@ -311,9 +311,9 @@ pub fn exec_script<T: AsRef<Path>>(path: T, wait: bool) -> Result<()> {
             ),
         );
 
-    // Set AP_MODULE environment variable
+    // Set UP_MODULE environment variable
     if let Some(id) = module_id {
-        command = command.env("AP_MODULE", id);
+        command = command.env("UP_MODULE", id);
     }
 
     let result = if wait {

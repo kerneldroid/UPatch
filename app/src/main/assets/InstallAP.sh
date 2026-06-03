@@ -23,7 +23,7 @@ kernelFlagsErr() {
   exit 1
 }
 
-apatchNote() {
+upatchNote() {
   ui_print "- UPatch patch done"
   ui_print "- The original boot image was saved to /data/boot.img"
   ui_print "- If you hit a boot loop, reboot to recovery and flash it"
@@ -52,7 +52,7 @@ patch_boot_image() {
   dd if="$WORKDIR/new-boot.img" of="$target_block" || failed
 
   mv -f boot.img /data/boot.img >/dev/null 2>&1 || true
-  apatchNote
+  upatchNote
 }
 
 main() {

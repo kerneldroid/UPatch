@@ -1,4 +1,4 @@
-package me.bmax.apatch.util
+package me.bmax.upatch.util
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
