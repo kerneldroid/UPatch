@@ -17,12 +17,7 @@ static inline long hash_key(const char *key)
 
 #define SUPERCALL_HELLO_ECHO "hello1158"
 
-// #define __NR_supercall __NR3264_truncate // 45
-#include <sys/syscall.h>
-#ifndef __NR_prctl
-#define __NR_prctl 167
-#endif
-#define __NR_supercall __NR_prctl
+#define __NR_supercall 45
 
 #define SUPERCALL_HELLO 0x1000
 #define SUPERCALL_KLOG 0x1004

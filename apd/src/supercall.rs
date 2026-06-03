@@ -17,7 +17,7 @@ const PATCH: c_long = 1;
 
 const KSTORAGE_EXCLUDE_LIST_GROUP: i32 = 1;
 
-const __NR_SUPERCALL: c_long = 167; // Use 167 (prctl) for Android 16 compatibility
+const __NR_SUPERCALL: c_long = 45;
 const SUPERCALL_SU: c_long = 0x1010;
 const SUPERCALL_KSTORAGE_WRITE: c_long = 0x1041;
 const SUPERCALL_SU_GRANT_UID: c_long = 0x1100;
